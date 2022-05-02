@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"regexp"
 )
 
 type SongEnt struct {
@@ -24,35 +25,26 @@ type Info struct {
 
 func parseSecond(s string) float64 {
 		startHMS := strings.Split(s, ":")
-		if len(startHMS) != 3 {
-			fmt.Printf("Each time for song should have 3 parts, got %s\n", s)
+		if len(startHMS) < 2 {
+			fmt.Printf("Each time for song should have at least 2 parts, got %s\n", s)
 			panic("Invalid time part")
 		}
 
 		var second float64 = 0
 
-		timepart, err := strconv.ParseFloat(startHMS[0], 64)
-		if err != nil {
-			panic("Invalid time part")
+		for len(startHMS) > 0 {
+			timepart, err := strconv.ParseFloat(startHMS[0], 64)
+			if err != nil {
+				panic("Invalid time part")
+			}
+			second = second*60.0 + timepart
+			startHMS = startHMS[1:]
 		}
-		second += timepart * 3600
-
-		timepart, err = strconv.ParseFloat(startHMS[1], 64)
-		if err != nil {
-			panic("Invalid time part")
-		}
-		second += timepart * 60.0
-
-		timepart, err = strconv.ParseFloat(startHMS[2], 64)
-		if err != nil {
-			panic("Invalid time part")
-		}
-		second += timepart
 
 		return second
 }
 
-func parse(path string) Info {
+func parse(path string) (Info, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
@@ -68,32 +60,30 @@ func parse(path string) Info {
 	info.singer = scanner.Text()
 	scanner.Scan()
 	var clipType = scanner.Text()
-
-	var tokenNumber int
-	if clipType == "stream" {
-		tokenNumber = 4
-	} else if clipType == "editted" {
-		tokenNumber = 3
-	} else {
-		panic("Cliptype must be stream or editted")
+	scanner.Scan()
+	var entRegexStr = scanner.Text()
+	var re *regexp.Regexp
+	re, err = regexp.Compile(entRegexStr)
+	if err != nil {
+		return info, err
 	}
 
 	for scanner.Scan() {
 		line := scanner.Text()
-		parts := strings.SplitN(line, " ", tokenNumber)
-		if len(parts) != tokenNumber {
-			fmt.Printf("Each line for song should have %d parts, got %s\n", tokenNumber, line)
-			continue
+		matches := re.FindStringSubmatch(line)
+
+		if (matches == nil) {
+			return info, fmt.Errorf("Invalid line: %s", line)
 		}
 
-		startSecond := parseSecond(parts[1])
+		startSecond := parseSecond(matches[re.SubexpIndex("start")])
 		var endSccond = 0.0
 		if (clipType == "stream") {
-			endSccond = parseSecond(parts[2])
+			endSccond = parseSecond(matches[re.SubexpIndex("end")])
 		}
 
 		newSongEnt := SongEnt{
-			name:  parts[len(parts) - 1],
+			name:  matches[re.SubexpIndex("name")],
 			start: startSecond,
 			end: endSccond,
 		}
@@ -132,7 +122,7 @@ func parse(path string) Info {
 		)
 	}
 
-	return info
+	return info, nil
 }
 
 func splitSong(discInfo Info) {
@@ -156,6 +146,8 @@ func splitSong(discInfo Info) {
 			"-metadata", fmt.Sprintf("track=%d", index),
 			"-metadata", fmt.Sprintf("album=%s", discInfo.discName),
 			"-metadata", fmt.Sprintf("artist=%s", discInfo.singer),
+			"-metadata", fmt.Sprintf("title=%s", x.name),
+			"-metadata", "genre=vtuber",
 			filePath,
 		)
 		stdoutStderr, err := cmd.CombinedOutput()
@@ -172,6 +164,11 @@ func main() {
 		fmt.Println("No input file")
 		os.Exit(-1)
 	}
-	var discInfo Info = parse( os.Args[1])
+	var discInfo, err = parse( os.Args[1])
+	if (err != nil) {
+		fmt.Println("Error on parsing file:", err)
+		os.Exit(-1)
+	}
+
 	splitSong(discInfo)
 }

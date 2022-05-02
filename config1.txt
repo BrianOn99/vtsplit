@@ -1,0 +1,20 @@
+【ほしまちメドレー】星街すいせい 歌枠メドレー Vol.1 (Hoshimachi Suisei Medley Vol.1)【作業用BGM】-N1fx5LqxUMY.mp3
+星街すいせい 歌枠メドレー Vol.1
+Hoshimachi Suisei
+editted
+(?P<start>\S+) (?P<name>.*)
+0:01 飛行艇/King Gnu
+4:25 紅蓮華/LiSA
+8:22 名前のない怪物/EGOIST
+13:38 asphyxia/Cö shu Nie
+16:38 Paradisus-Paradoxum/MYTH&ROID
+20:30 カワキヲアメク/美波
+24:43 お勉強しといてよ/ずっと真夜中でいいのに。
+29:20 ヒューマノイド/ずっと真夜中でいいのに。
+33:37 夜に駆ける/YOASOBI
+38:00 命に嫌われている。/カンザキイオリ
+43:02 愛を伝えたいだとか/あいみょん
+46:59 プラチナ/坂本真綾
+51:06 光るなら/Goose house
+55:15 花に亡霊/ヨルシカ
+59:20 だから僕は音楽を辞めた/ヨルシカ
